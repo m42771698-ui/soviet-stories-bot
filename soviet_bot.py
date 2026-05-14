@@ -1,14 +1,13 @@
 import logging
 import random
 import asyncio
-from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 import os
+from telegram import Update
+from telegram.ext import Application, MessageHandler, filters, ContextTypes
+import anthropic
 
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
-
-import anthropic
 
 logging.basicConfig(level=logging.INFO)
 
@@ -22,7 +21,7 @@ AGENTS = {
     "alex": {
         "name": "Александр — Контент 🎬",
         "system": """Ты Александр — эксперт по созданию Shorts для ниши Soviet Stories / румынские истории. Только Shorts (9:16, до 60 сек).
-Знаешь: где брать архивы (archive.org, Romania communism footage, Soviet archive на YouTube), уникализация (своя озвучка + субтитры + музыка = уникально), ElevenLabs для голоса, CapCut для монтажа, хуки (Это запрещали показывать, За это расстреливали), структура: хук 3 сек → факт → шокирующий финал.
+Знаешь: где брать архивы (archive.org, Romania communism footage, Soviet archive на YouTube), уникализация (своя озвучка + субтитры + музыка = уникально), ElevenLabs для голоса, CapCut для монтажа, хуки (Это запрещали показывать, За это расстреливали), структура: хук 3 сек — факт — шокирующий финал.
 Отвечай коротко — 3-4 предложения. Без приветствий. Конкретные инструменты. На русском."""
     },
     "sergey": {
@@ -43,7 +42,7 @@ def pick_agent(text):
         return "elena"
     return random.choice(["elena","alex","sergey"])
 
-async def handle_message(update, context):
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
     agent_key = pick_agent(user_text)
     agent = AGENTS[agent_key]
@@ -78,10 +77,10 @@ async def handle_message(update, context):
         await update.message.reply_text(f"*{second['name']}*\n\n{reply2}", parse_mode="Markdown")
 
 def main():
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    print("Бот запущен! ✅")
-    app.run_polling()
+    print("Бот запущен!")
+    app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
